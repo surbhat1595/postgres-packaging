@@ -125,8 +125,8 @@ get_sources(){
             mv $file "percona-$file"
         done
         rm -f rules* control*
-        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/DISTPG-494_add_postgis/postgis/rules
-        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/DISTPG-494_add_postgis/postgis/control
+        wget https://raw.githubusercontent.com/percona/postgres-packaging/12.12/postgis/rules
+        wget https://raw.githubusercontent.com/percona/postgres-packaging/12.12/postgis/control
 	cp control control.in
        # sed -i 's/postgresql-12/percona-postgresql-12/' percona-postgresql-12.templates
         echo "9" > compat
@@ -137,8 +137,8 @@ get_sources(){
     rm -rf pgrpms
     cd rpm
         rm -f postgis33.spec postgis33-3.3.0-gdalfpic.patch
-        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/DISTPG-494_add_postgis/postgis/percona-postgis33.spec
-        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/DISTPG-494_add_postgis/postgis/postgis33-3.3.0-gdalfpic.patch
+        wget https://raw.githubusercontent.com/percona/postgres-packaging/12.12/postgis/percona-postgis33.spec
+        wget https://raw.githubusercontent.com/percona/postgres-packaging/12.12/postgis/postgis33-3.3.0-gdalfpic.patch
     cd ../
     cd ${WORKDIR}
     #
