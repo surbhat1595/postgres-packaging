@@ -120,8 +120,8 @@ get_sources(){
             mv $file "percona-$file"
         done
 	rm -f rules control
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres/rules
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres/control
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres/rules
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres/control
         sed -i 's/postgresql-16/percona-postgresql-16/' percona-postgresql-16.templates
 	echo "10" > compat
 	sed -i '14d' patches/series
@@ -132,7 +132,7 @@ get_sources(){
     rm -rf pgrpms
     cd rpm
         rm postgresql-16.spec
-        wget  https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres/percona-postgresql-16.spec
+        wget  https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres/percona-postgresql-16.spec
     cd ../
     cd ${WORKDIR}
     #
@@ -477,6 +477,8 @@ build_deb(){
         cat call-home.sh >> percona-postgresql-16.postinst
         echo "CALLHOME" >> percona-postgresql-16.postinst
         echo "bash +x /tmp/call-home.sh -f \"PRODUCT_FAMILY_POSTGRESQL\" -v \"${PG_VERSION}-${DEB_RELEASE}\" -d \"PACKAGE\" || :" >> percona-postgresql-16.postinst
+	echo "chgrp percona-telemetry /usr/local/percona/telemetry_uuid &>/dev/null || :" >> percona-postgresql-16.postinst
+        echo "chmod 664 /usr/local/percona/telemetry_uuid &>/dev/null || :" >> percona-postgresql-16.postinst
         echo "rm -rf /tmp/call-home.sh" >> percona-postgresql-16.postinst
         echo "exit 0" >> percona-postgresql-16.postinst
         rm -f call-home.sh
