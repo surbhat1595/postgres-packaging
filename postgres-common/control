@@ -13,6 +13,12 @@ Multi-Arch: foreign
 Pre-Depends: postgresql-common (= ${binary:Version}),
 Description: Virtual package to satisfy dependencies
 
+Package: percona-postgresql-common-dev
+Architecture: all
+Multi-Arch: foreign
+Pre-Depends: postgresql-common-dev (= ${binary:Version}),
+Description: Virtual package to satisfy dependencies
+
 Package: postgresql-common
 Architecture: all
 Multi-Arch: foreign
@@ -24,6 +30,7 @@ Depends:
  perl (>= 5.14),
  percona-postgresql-client-common | postgresql-client-common,
  percona-postgresql-common,
+ percona-postgresql-common-dev,
  ssl-cert (>= 1.0.11),
  ucf,
  ${misc:Depends},
@@ -87,7 +94,7 @@ Description: manager for multiple PostgreSQL client versions
  outer joins, multiversion concurrency control, and user-defined types
  and functions.
 
-Package: percona-postgresql-common-dev
+Package: postgresql-common-dev
 Architecture: all
 Multi-Arch: foreign
 Depends:
@@ -108,9 +115,9 @@ Replaces:
  postgresql-common (<< 269),
  percona-postgresql-common (<< 269),
  postgresql-server-dev-all (<< 269),
- perconapostgresql-server-dev-all (<< 269),
+ percona-postgresql-server-dev-all (<< 269),
 Provides:
- postgresql-common-dev
+ postgresql-common-dev, percona-postgresql-common-dev
 Description: extension build tool for multiple PostgreSQL versions
  The postgresql-server-dev-all package provides the pg_buildext script for
  simplifying packaging of a PostgreSQL extension supporting multiple major
@@ -129,6 +136,7 @@ Architecture: all
 Depends:
  make,
  percona-postgresql-common (>= 117~),
+ percona-postgresql-common-dev,
  ${misc:Depends},
  ${server-dev-all-depends},
 Provides: postgresql-server-dev-all

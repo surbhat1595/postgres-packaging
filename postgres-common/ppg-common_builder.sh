@@ -118,12 +118,13 @@ get_sources(){
 	    mv $file $newname; 
         done
 	rm -rf rules control supported-versions 
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/control
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/maintscripts-functions.patch
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/percona-postgresql-common.templates.patch
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/rules
-	wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/supported-versions
-	wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/postgresql-common.install
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/control
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/maintscripts-functions.patch
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/percona-postgresql-common.templates.patch
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/rules
+	wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/supported-versions
+	wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/postgresql-common.install
+	wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/postgresql-common-dev.install
 	cp postgresql-common.tmpfiles postgresql-common.conf
 	sudo chmod +x supported-versions
         patch -p0 < maintscripts-functions.patch
@@ -141,14 +142,14 @@ get_sources(){
 	echo "pgcommon.sh usr/share/postgresql-common" >> postgresql-client-common.install
 	sudo sed -i 's:db_stop:db_stop || true:' maintscripts-functions
     cd ../
-    wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/pgcommon.sh
+    wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/pgcommon.sh
     sudo chmod +x pgcommon.sh
     cd rpm
         for file in $(ls | grep postgresql); do
             mv $file "percona-$file"
         done
 	rm -rf percona-postgresql-common.spec
-        wget https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}/postgres-common/percona-postgresql-common.spec
+        wget https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}/postgres-common/percona-postgresql-common.spec
 	if [ ${ARCH} = "aarch64" ]; then
             sed -e '4d' percona-postgresql-common.spec
 	fi	
@@ -447,12 +448,12 @@ INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="debian/267"
+BRANCH="debian/277"
 REPO="https://salsa.debian.org/postgresql/postgresql-common.git"
 PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
-VERSION='267'
+VERSION='277'
 RELEASE='1'
 PRODUCT_FULL=${PRODUCT}-${VERSION}
 PG_VERSION=16.9
