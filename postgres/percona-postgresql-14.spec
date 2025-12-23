@@ -251,6 +251,9 @@ Requires(postun):       systemd
 Provides:       postgresql-server >= %{version}-%{release}
 Provides:       %{vname}-server = %{epoch}:%{version}-%{release}
 Provides:       %{sname}-server = %{epoch}:%{version}-%{release}
+%if 0%{?rhel} == 10
+Conflicts:      postgresql16-server
+%endif
 Obsoletes:      %{sname}-server <= %{version}-%{release}
 Obsoletes:      %{vname}-server <= %{version}-%{release}
 
