@@ -246,13 +246,13 @@ Requires(preun):        systemd
 Requires(postun):       systemd
 %endif
 %endif
-%if 0%{?rhel} == 10
-Provides:       postgresql-server = %{version}-%{release}
-%else
 Provides:       postgresql-server >= %{version}-%{release}
-%endif
 Provides:       %{vname}-server = %{epoch}:%{version}-%{release}
 Provides:       %{sname}-server = %{epoch}:%{version}-%{release}
+%if 0%{?rhel} == 10
+Conflicts:      postgresql-server
+Conflicts:      postgresql16-server
+%endif
 Obsoletes:      %{sname}-server <= %{version}-%{release}
 Obsoletes:      %{vname}-server <= %{version}-%{release}
 
