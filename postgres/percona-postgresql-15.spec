@@ -61,6 +61,10 @@
 %global _hardened_build 1
 %endif
 
+#%if 0%{?rhel} == 10
+#%global __requires_exclude ^postgresql.*
+#%endif
+
 #Filter out some Perl "dependencies"
 %global __requires_exclude ^perl\\((PostgresVersion|PostgresNode|RecursiveCopy|SimpleTee|TestLib)
 %global __provides_exclude ^perl\\((PostgresVersion|PostgresNode|RecursiveCopy|SimpleTee|TestLib)
@@ -183,11 +187,9 @@ Requires(postun):       systemd
 %endif
 
 Requires:       %{name}-libs >= %{version}-%{release}
-
 Requires(post): %{_sbindir}/update-alternatives
 Requires(postun):       %{_sbindir}/update-alternatives
 Epoch:          1
-
 Provides:       %{sname} = %{epoch}:%{version}-%{release}
 Provides:       %{vname} = %{epoch}:%{version}-%{release}
 Obsoletes:      %{sname} <= %{version}-%{release}
@@ -212,6 +214,10 @@ Provides:       postgresql-libs = %{pgmajorversion} libpq5 >= 10.0
 Provides:       postgresql-libs >= %{version}-%{release}
 Provides:       %{sname}-libs = %{epoch}:%{version}-%{release}
 Provides:       %{vname}-libs = %{epoch}:%{version}-%{release}
+%if 0%{?rhel} == 10
+Conflicts:      %{sname}-private-libs
+Obsoletes:      %{sname}-private-libs
+%endif
 Obsoletes:      %{sname}-libs <= %{version}-%{release}
 Obsoletes:      %{vname}-libs <= %{version}-%{release}
 
@@ -296,7 +302,6 @@ included in the PostgreSQL distribution.
 
 %package devel
 Summary:        PostgreSQL development header files and libraries
-Requires:       %{name} >= %{version}-%{release}
 Requires:       %{name} >= %{version}-%{release}
 Requires:       %{name}-libs >= %{version}-%{release}
 Requires:       llvm-devel => 17.0 clang-devel >= 17.0
