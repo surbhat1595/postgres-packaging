@@ -9,11 +9,11 @@ on:
         default: '15.16'
         type: choice
         options:
-          - '18.2'
-          - '17.8'
-          - '16.12'
-          - '15.16'
-          - '14.21'
+          - '18.3'
+          - '17.9'
+          - '16.13'
+          - '15.17'
+          - '14.22'
 
       arch:
         description: architecture
