@@ -401,9 +401,6 @@ Requires:        libLLVM17
 %if 0%{?suse_version} == 1600
 Requires:        libLLVM19
 %endif
-%if 0%{?fedora} || 0%{?rhel}
-Requires:       llvm => 19
-%endif
 Provides:       postgresql-llvmjit >= %{version}-%{release}
 Provides:       %{vname}-llvmjit = %{epoch}:%{version}-%{release}
 Provides:       %{sname}-llvmjit = %{epoch}:%{version}-%{release}
@@ -539,6 +536,10 @@ export CFLAGS
 # https://www.postgresql.org/message-id/CACMiCkV%2BfQ4yAZqygyWx7ZQ8eWsj1AjoC6CGEUoyxY9jUm7paA%40mail.gmail.com
 # Previously reported by Muralikrishna Bandaru.
 export CLANG=%{_bindir}/clang LLVM_CONFIG=%{_bindir}/llvm-config
+
+%if 0%{?rhel} && 0%{?rhel} == 9
+	source /opt/rh/gcc-toolset-14/enable
+%endif
 
 # These configure options must match main build
 ./configure --enable-rpath \

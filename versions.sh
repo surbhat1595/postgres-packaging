@@ -23,12 +23,12 @@ WAL2JSON_VERSION=2.6
 #-------------------------------------- COMMON URLs --------------------------------------
 
 # Github Packaging Repo
-PKG_GIT_REPO="https://github.com/percona/postgres-packaging.git"
+PKG_GIT_REPO="https://github.com/surbhat1595/postgres-packaging.git"
 PKG_GIT_BRANCH=${PG_VERSION}
 PGRPMS_GIT_REPO="https://git.postgresql.org/git/pgrpms.git"
 
 # Raw files URLs
-PKG_RAW_URL="https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}"
+PKG_RAW_URL="https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}"
 
 # Percona Repos
 YUM_REPO="https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
