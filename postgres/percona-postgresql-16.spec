@@ -270,10 +270,6 @@ Provides:       postgresql-libs = %{pgmajorversion} libpq5 >= 10.0
 Provides:       postgresql-libs >= %{version}-%{release}
 Provides:       %{sname}-libs = %{epoch}:%{version}-%{release}
 Provides:       %{vname}-libs = %{epoch}:%{version}-%{release}
-%if 0%{?rhel} == 10
-Conflicts:      %{sname}-private-libs
-Obsoletes:      %{sname}-private-libs
-%endif
 Obsoletes:      %{sname}-libs <= %{version}-%{release}
 Obsoletes:      %{vname}-libs <= %{version}-%{release}
 Epoch:          1
@@ -312,6 +308,7 @@ Requires(post):         systemd
 Requires(preun):        systemd
 Requires(postun):       systemd
 Provides:       postgresql-server >= %{version}-%{release}
+Provides:       group(postgres) user(postgres)
 Provides:       %{vname}-server = %{epoch}:%{version}-%{release}
 Provides:       %{sname}-server = %{epoch}:%{version}-%{release}
 Obsoletes:      %{sname}-server <= %{version}-%{release}

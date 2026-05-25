@@ -22,12 +22,12 @@ WAL2JSON_VERSION=2.6
 #-------------------------------------- COMMON URLs --------------------------------------
 
 # Github Packaging Repo
-PKG_GIT_REPO="https://github.com/percona/postgres-packaging.git"
+PKG_GIT_REPO="https://github.com/surbhat1595/postgres-packaging.git"
 PKG_GIT_BRANCH=${PG_VERSION}
 PGRPMS_GIT_REPO="https://git.postgresql.org/git/pgrpms.git"
 
 # Raw files URLs
-PKG_RAW_URL="https://raw.githubusercontent.com/percona/postgres-packaging/${PG_VERSION}"
+PKG_RAW_URL="https://raw.githubusercontent.com/surbhat1595/postgres-packaging/${PG_VERSION}"
 
 # Percona Repos
 YUM_REPO="https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
@@ -40,8 +40,8 @@ case "$1" in
         PPG_PRODUCT_FULL=${PPG_PRODUCT}-${PG_VERSION}
         PG_SRC_BRANCH="REL_${PG_MAJOR}_${PG_MINOR}"
 # The release version is bumped only for RHEL-10 due to PG-2236
-        PG_RELEASE='2'
-        PG_RPM_RELEASE='2'
+        PG_RELEASE='3'
+        PG_RPM_RELEASE='3'
         PG_DEB_RELEASE='1'
 
         # urls

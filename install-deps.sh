@@ -169,8 +169,9 @@ case "$COMPONENT" in
   postgresql)
     if [ "x$OS" = "xrpm" ]; then
       rpm_deps
+      yum install -y clang-devel-20.1.8 clang-20.1.8 llvm-devel-20.1.8
       INSTALL_LIST+="wget git vim rpm-build chrpath rpmdevtools clang perl-generators bison flex gettext patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed selinux-policy systemd systemd-devel systemtap-sdt-devel perl-IPC-Run perl-Test-Simple binutils gcc gcc-c++ cmake cyrus-sasl-devel make docbook-xsl "
-      INSTALL_LIST+="clang-devel python3-devel llvm-devel glibc-devel e2fsprogs-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel openldap-devel openssl-devel pam-devel readline-devel tcl-devel zlib-devel lz4-devel libzstd-devel bzip2-devel libcurl-devel"
+      INSTALL_LIST+="python3-devel glibc-devel e2fsprogs-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel openldap-devel openssl-devel pam-devel readline-devel tcl-devel zlib-devel lz4-devel libzstd-devel bzip2-devel libcurl-devel"
       dnf -y install ${INSTALL_LIST}
       if [ ! -f  /usr/bin/llvm-config ]; then
         ln -s /usr/bin/llvm-config-64 /usr/bin/llvm-config
