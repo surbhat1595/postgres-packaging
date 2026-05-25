@@ -1,4 +1,5 @@
 %undefine _package_note_file
+%global _default_patch_fuzz 2
 
 # These are macros to be used with find_lang and other stuff
 %global packageversion %{pgmajorversion}0
@@ -305,10 +306,6 @@ Provides:       postgresql-libs = %{pgmajorversion} libpq5 >= 10.0
 Provides:       postgresql-libs >= %{version}-%{release}
 Provides:       %{sname}-libs = %{epoch}:%{version}-%{release}
 Provides:       %{vname}-libs = %{epoch}:%{version}-%{release}
-%if 0%{?rhel} == 10
-Conflicts:      %{sname}-private-libs
-Obsoletes:      %{sname}-private-libs
-%endif
 Obsoletes:      %{sname}-libs <= %{version}-%{release}
 Obsoletes:      %{vname}-libs <= %{version}-%{release}
 
@@ -363,6 +360,7 @@ Requires(postun):       systemd
 %endif
 %endif
 Provides:       postgresql-server >= %{version}-%{release}
+Provides:       group(postgres) user(postgres)
 Provides:       %{vname}-server = %{epoch}:%{version}-%{release}
 Provides:       %{sname}-server = %{epoch}:%{version}-%{release}
 Obsoletes:      %{sname}-server <= %{version}-%{release}
