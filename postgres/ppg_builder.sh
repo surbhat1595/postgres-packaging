@@ -143,7 +143,7 @@ build_srpm(){
         --define "pgpackageversion ${PG_MAJOR}" \
         --define "version ${PG_VERSION}" \
         --define "pg_release ${PG_RELEASE}" \
-        --define "release ${BUILD_RELEASE}" \
+        --define "release 2" \
         rpmbuild/SPECS/percona-postgresql-${PG_MAJOR}.spec
     mkdir -p ${WORKDIR}/srpm
     mkdir -p ${CURDIR}/srpm
@@ -200,7 +200,7 @@ build_rpm(){
         --define "pgpackageversion ${PG_MAJOR}" \
         --define "version ${PG_VERSION}" \
         --define "pg_release ${PG_RELEASE}" \
-        --define "release ${BUILD_RELEASE}" \
+        --define "release 2" \
         --rebuild rpmbuild/SRPMS/$SRC_RPM
 
     return_code=$?
@@ -329,7 +329,7 @@ if [ ${NIGHTLY} = 1 ]; then
    fi
 else
    if [ "x$OS" = "xrpm" ]; then
-      BUILD_RELEASE=${PG_RPM_RELEASE}
+      BUILD_RELEASE=2
    else
       BUILD_RELEASE=${PG_DEB_RELEASE}
    fi
