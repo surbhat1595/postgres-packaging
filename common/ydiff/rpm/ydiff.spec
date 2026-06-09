@@ -1,6 +1,10 @@
 
 %global        debug_package %{nil}
 
+%if 0%{?fedora} && 0%{?fedora} == 44
+%global __ospython %{_bindir}/python3.14
+%global python3_pkgversion 3.14
+%endif
 %if 0%{?fedora} && 0%{?fedora} == 43
 %global __ospython %{_bindir}/python3.14
 %global python3_pkgversion 3.14
@@ -9,11 +13,7 @@
 %global        __ospython %{_bindir}/python3.13
 %global        python3_pkgversion 3.13
 %endif
-%if 0%{?rhel} && 0%{?rhel} == 8
-%global __ospython %{_bindir}/python3
-%global python3_pkgversion 3
-%endif
-%if 0%{?rhel} && 0%{?rhel} >= 9
+%if 0%{?rhel} && 0%{?rhel} <= 10
 %global	__ospython %{_bindir}/python3.12
 %global	python3_pkgversion 3.12
 %endif
@@ -84,5 +84,10 @@ Python library that implements API used by ydiff tool.
 
 
 %changelog
+* Tue Jun 9 2026 Percona Development Team <https://jira.percona.com> - 1.4.2
+- Build with Python 3.12 on RHEL 8/9/10 (drop the RHEL 8 platform
+  python3.6 build) so the python3-ydiff module is importable by the
+  Python 3.12 Patroni build, aligning with PGDG.
+
 * Fri Apr 16 2021 Evgeniy Patlan <evgeniy.patlan@percona.com> - 1.2-10
 - Initial build.
