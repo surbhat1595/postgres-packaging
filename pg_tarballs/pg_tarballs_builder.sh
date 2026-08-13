@@ -184,11 +184,11 @@ WAL2JSON_BRANCH="wal2json_2_6"
 PG_STAT_MONITOR_BRANCH="release-2.3.2"
 PGBACKREST_BRANCH="release/2.59.0"
 PGBADGER_BRANCH="v13.2"
-PATRONI_BRANCH="v4.1.4"
+PATRONI_BRANCH="v4.1.5"
 HAPROXY_BRANCH="v2.8.27"
 PGVECTOR_BRANCH="v0.8.6"
 PG_TDE_BRANCH="release-2.2"
-PG_OIDC_BRANCH="release-1.0"
+PG_OIDC_BRANCH="1.1.0"
 PG_CRON_BRANCH="v1.6.7"
 
 create_build_environment(){
@@ -1320,6 +1320,7 @@ build_pg_tde(){
     build_status "start" "pgTDE"
     mkdir -p /source
     cd /source
+    rm -rf pg_tde
     git clone --recursive https://github.com/percona/pg_tde.git
     cd pg_tde
     if [ ! -z "${PG_TDE_BRANCH}" ]
@@ -1327,11 +1328,27 @@ build_pg_tde(){
         git reset --hard
         git clean -xdf
         git checkout "${PG_TDE_BRANCH}"
+        git submodule update --init --recursive
     fi
 
-	export PATH=${POSTGRESQL_PREFIX}/bin:$PATH
-    make USE_PGXS=1 -j4
-    make USE_PGXS=1 -j4 install
+	# release-2.2+ dropped the Makefile/PGXS build; packages use meson + C++20.
+	yum install -y gcc-toolset-14 gcc-toolset-14-gcc-c++
+	source /opt/rh/gcc-toolset-14/enable
+
+	export PATH=${POSTGRESQL_PREFIX}/bin:${DEPENDENCY_LIBS_PATH}/bin:$PATH
+	export PKG_CONFIG_PATH=${DEPENDENCY_LIBS_PATH}/lib64/pkgconfig:${DEPENDENCY_LIBS_PATH}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
+	export LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:${POSTGRESQL_PREFIX}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+
+	rm -rf build
+	meson setup build -Dpg_config=${POSTGRESQL_PREFIX}/bin/pg_config
+	meson compile -C build -j 4
+	meson install -C build
+
+	# Match .deb/.rpm: ship TdeCluster.pm for TAP tests
+	if [ -f ci_scripts/perl/PostgreSQL/Test/TdeCluster.pm ]; then
+		mkdir -p ${POSTGRESQL_PREFIX}/lib/pgxs/src/test/perl/PostgreSQL/Test
+		install -m 644 ci_scripts/perl/PostgreSQL/Test/TdeCluster.pm ${POSTGRESQL_PREFIX}/lib/pgxs/src/test/perl/PostgreSQL/Test/
+	fi
 
 	build_status "ends" "pgTDE"
 }
