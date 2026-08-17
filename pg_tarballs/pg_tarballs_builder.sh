@@ -1082,7 +1082,7 @@ build_python(){
 	cd ${PYTHON_PREFIX}/lib/python$(echo ${PYTHON_VERSION} | cut -d. -f1-2)/lib-dynload/
 
 	ARCH=$(uname -m)
-	patchelf --force-rpath --set-rpath "${PYTHON_PREFIX}/lib" _ctypes.cpython-$(echo ${PYTHON_VERSION} | cut -d. -f1-2 | sed -e 's|\.||g')-${ARCH}-linux-gnu.so
+	run_patchelf --force-rpath --set-rpath "${PYTHON_PREFIX}/lib" _ctypes.cpython-$(echo ${PYTHON_VERSION} | cut -d. -f1-2 | sed -e 's|\.||g')-${ARCH}-linux-gnu.so
 	cd -
 
 	${PYTHON_PREFIX}/bin/python3 -m ensurepip
@@ -1189,11 +1189,20 @@ build_postgres_server(){
 	fi
 
         export XML_CATALOG_FILES=/etc/xml/catalog
+	# Link with XORIGIN (same length as $ORIGIN) so we can rewrite the
+	# dynamic string in-place. Passing $ORIGIN through configure/make is
+	# eaten, and patchelf rewrite of aarch64 postgres segfaults on 64K pages.
+	ARCH=$(uname -m)
+	PG_LINK_RPATH="XORIGIN/../lib:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib/${PERL_VERSION}/${ARCH}-linux/CORE:${TCL_PREFIX}/lib"
+	PG_LDFLAGS="-Wl,--enable-new-dtags -Wl,-z,origin -Wl,-rpath,${PG_LINK_RPATH}"
+	if [ "${ARCH}" = "aarch64" ]; then
+		PG_LDFLAGS="${PG_LDFLAGS} -Wl,-z,max-page-size=0x10000"
+	fi
         if [ "$INCLUDE_LIBURING" = "1" ]; then
 		export PKG_CONFIG_PATH="${DEPENDENCY_LIBS_PATH}/lib/pkgconfig"
-		CFLAGS='-O2 -DMAP_HUGETLB=0x40000' ICU_LIBS="-L${DEPENDENCY_LIBS_PATH}/lib -licuuc -licudata -licui18n" ICU_CFLAGS="-I${DEPENDENCY_LIBS_PATH}/include" ./configure --with-icu --enable-debug --with-libs=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64 --with-includes=${DEPENDENCY_LIBS_PATH}/include/libxml2:${DEPENDENCY_LIBS_PATH}/include/readline:${DEPENDENCY_LIBS_PATH}/include:${SSL_INSTALL_PATH}/include/openssl --prefix=${POSTGRESQL_PREFIX} --with-ldap --with-openssl --with-perl --with-python --with-tcl --with-pam --enable-thread-safety --with-libxml --with-libnuma --with-liburing --with-ossp-uuid --with-lz4 --with-zstd --docdir=${POSTGRESQL_PREFIX}/doc/postgresql --with-libxslt --with-libedit-preferred --with-gssapi LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib:${TCL_PREFIX}/lib
+		CFLAGS='-O2 -DMAP_HUGETLB=0x40000' ICU_LIBS="-L${DEPENDENCY_LIBS_PATH}/lib -licuuc -licudata -licui18n" ICU_CFLAGS="-I${DEPENDENCY_LIBS_PATH}/include" ./configure --with-icu --enable-debug --disable-rpath --with-libs=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64 --with-includes=${DEPENDENCY_LIBS_PATH}/include/libxml2:${DEPENDENCY_LIBS_PATH}/include/readline:${DEPENDENCY_LIBS_PATH}/include:${SSL_INSTALL_PATH}/include/openssl --prefix=${POSTGRESQL_PREFIX} --with-ldap --with-openssl --with-perl --with-python --with-tcl --with-pam --enable-thread-safety --with-libxml --with-libnuma --with-liburing --with-ossp-uuid --with-lz4 --with-zstd --docdir=${POSTGRESQL_PREFIX}/doc/postgresql --with-libxslt --with-libedit-preferred --with-gssapi LDFLAGS="${PG_LDFLAGS}" LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib:${TCL_PREFIX}/lib
         else
-		CFLAGS='-O2 -DMAP_HUGETLB=0x40000' ICU_LIBS="-L${DEPENDENCY_LIBS_PATH}/lib -licuuc -licudata -licui18n" ICU_CFLAGS="-I${DEPENDENCY_LIBS_PATH}/include" ./configure --with-icu --enable-debug --with-libs=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64 --with-includes=${DEPENDENCY_LIBS_PATH}/include/libxml2:${DEPENDENCY_LIBS_PATH}/include/readline:${DEPENDENCY_LIBS_PATH}/include:${SSL_INSTALL_PATH}/include/openssl --prefix=${POSTGRESQL_PREFIX} --with-ldap --with-openssl --with-perl --with-python --with-tcl --with-pam --enable-thread-safety --with-libxml --with-ossp-uuid  --with-lz4 --with-zstd --docdir=${POSTGRESQL_PREFIX}/doc/postgresql --with-libxslt --with-libedit-preferred --with-gssapi LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib:${TCL_PREFIX}/lib
+		CFLAGS='-O2 -DMAP_HUGETLB=0x40000' ICU_LIBS="-L${DEPENDENCY_LIBS_PATH}/lib -licuuc -licudata -licui18n" ICU_CFLAGS="-I${DEPENDENCY_LIBS_PATH}/include" ./configure --with-icu --enable-debug --disable-rpath --with-libs=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64 --with-includes=${DEPENDENCY_LIBS_PATH}/include/libxml2:${DEPENDENCY_LIBS_PATH}/include/readline:${DEPENDENCY_LIBS_PATH}/include:${SSL_INSTALL_PATH}/include/openssl --prefix=${POSTGRESQL_PREFIX} --with-ldap --with-openssl --with-perl --with-python --with-tcl --with-pam --enable-thread-safety --with-libxml --with-ossp-uuid  --with-lz4 --with-zstd --docdir=${POSTGRESQL_PREFIX}/doc/postgresql --with-libxslt --with-libedit-preferred --with-gssapi LDFLAGS="${PG_LDFLAGS}" LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib:${DEPENDENCY_LIBS_PATH}/lib64:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib:${TCL_PREFIX}/lib
 	fi
 	LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:${PYTHON_PREFIX}/lib:${PERL_PREFIX}/lib:${TCL_PREFIX}/lib:$LD_LIBRARY_PATH make
 	cd src/backend
@@ -1312,6 +1321,13 @@ EOT
 	ln -s libcrypt.so.1 libcrypt.so.2
 	cd -
 	chmod 755 ${POSTGRESQL_PREFIX}/lib/*.so*
+	rewrite_xorigin_rpath "${POSTGRESQL_PREFIX}/bin"
+	# PGXS hands our LDFLAGS to anyone building an extension against the
+	# tarball. Emit \$$ORIGIN: make turns $$ into $, and the leading
+	# backslash stops the recipe shell from expanding $ORIGIN to nothing.
+	if [ -f "${POSTGRESQL_PREFIX}/lib/pgxs/src/Makefile.global" ]; then
+		sed -i 's|XORIGIN|\\$$ORIGIN|g' "${POSTGRESQL_PREFIX}/lib/pgxs/src/Makefile.global"
+	fi
 	build_status "ends" "PostgreSQL Server"
 }
 
@@ -1967,6 +1983,10 @@ build_postgis35(){
 	build_status "ends" "postgis35"
 }
 
+# Distro (yum) patchelf does not support --page-size and treats it as a filename.
+# Always invoke the pinned NixOS binary by absolute path.
+PATCHELF_BIN=/usr/local/bin/patchelf
+
 get_updated_patchelf(){
 	ARCH=$(uname -m)
 	PATCHELF_VERSION=0.17.2
@@ -1975,9 +1995,56 @@ get_updated_patchelf(){
 	pushd /tmp/patchelf
 	wget_retry https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${ARCH}.tar.gz
 	tar -xzf patchelf-${PATCHELF_VERSION}-${ARCH}.tar.gz
-	install -m 755 bin/patchelf /usr/bin/patchelf
+	install -m 755 bin/patchelf "${PATCHELF_BIN}"
 	popd
-	patchelf --version
+	hash -r
+	"${PATCHELF_BIN}" --version
+	if ! "${PATCHELF_BIN}" --help 2>&1 | grep -q -- '--page-size'; then
+		echo "Error: ${PATCHELF_BIN} does not support --page-size"
+		exit 1
+	fi
+}
+
+# RHEL/Rocky 8 aarch64 kernels use 64K pages. patchelf defaults can leave 4K
+# LOAD alignment, so the kernel segfaults on exec while
+# /lib/ld-linux-aarch64.so.1 ./binary still works.
+# Use two arguments (--page-size 65536); the --page-size=65536 form is rejected
+# by older patchelf as a filename.
+run_patchelf(){
+	if [ ! -x "${PATCHELF_BIN}" ]; then
+		get_updated_patchelf
+	fi
+	if [ "$(uname -m)" = "aarch64" ]; then
+		"${PATCHELF_BIN}" --page-size 65536 "$@"
+	else
+		"${PATCHELF_BIN}" "$@"
+	fi
+}
+
+# XORIGIN and $ORIGIN are the same length, so this does not change ELF layout
+# (unlike patchelf --set-rpath).
+rewrite_xorigin_rpath(){
+	local directory="$1"
+	local binary
+	if [ ! -d "$directory" ]; then
+		echo "Error: Directory not found: $directory"
+		exit 1
+	fi
+	for binary in "$directory"/*; do
+		if [ -f "$binary" ] && file "$binary" | grep -q "ELF"; then
+			# Binaries not built through PGXS (e.g. meson-built pg_tde tools)
+			# have no placeholder; leave them for patchelf.
+			python3 - "$binary" <<'PY'
+import pathlib, sys
+path = pathlib.Path(sys.argv[1])
+data = path.read_bytes()
+old, new = b"XORIGIN", b"$ORIGIN"
+if old in data:
+    path.write_bytes(data.replace(old, new))
+    print("Rewrote XORIGIN -> $ORIGIN in %s" % path)
+PY
+		fi
+	done
 }
 
 set_rpath(){
@@ -1996,12 +2063,24 @@ set_rpath(){
 
                 # Check if the file is an ELF executable or shared library
                 if [ -f "$binary" ] && file "$binary" | grep -q "ELF"; then
+                        file_type=$(file "$binary")
+                        # patchelf corrupts aarch64 ET_EXEC (unstripped postgres): execve
+                        # SIGSEGV on 64K-page kernels while ld.so still works. Skip only
+                        # aarch64 executables that already carry a relocatable RUNPATH
+                        # from the linker. Match '$ORIGIN' literally: plain 'ORIGIN' also
+                        # matches the unrewritten XORIGIN placeholder.
+                        if [ "$(uname -m)" = "aarch64" ] && ! echo "$file_type" | grep -q "shared object" \
+                           && "${PATCHELF_BIN}" --print-rpath "$binary" 2>/dev/null | grep -qF '$ORIGIN'; then
+                                echo "Skipping patchelf for pre-linked aarch64 executable $binary"
+                                echo "------------------------"
+                                continue
+                        fi
                         echo "Changing RPATH for $binary..."
-                        if ! patchelf --force-rpath --set-rpath "$new_rpath" "$binary"; then
+                        if ! run_patchelf --force-rpath --set-rpath "$new_rpath" "$binary"; then
                                 echo "Error: patchelf failed for $binary"
                                 exit 1
                         fi
-                        actual_rpath=$(patchelf --print-rpath "$binary")
+                        actual_rpath=$("${PATCHELF_BIN}" --print-rpath "$binary")
                         if [ "$actual_rpath" != "$new_rpath" ]; then
                                 echo "Error: RPATH verification failed for $binary"
                                 echo "Expected: $new_rpath"
@@ -2024,6 +2103,11 @@ set_rpath_all_products(){
 	unset LD_LIBRARY_PATH
 
 	get_updated_patchelf
+
+	# Extensions built after the server (pg_repack, pg_oidc) inherit the
+	# XORIGIN LDFLAGS from Makefile.global, so rewrite the placeholder again
+	# now that every component is installed.
+	rewrite_xorigin_rpath "${POSTGRESQL_PREFIX}/bin"
 
 	ARCH=$(uname -m)
 	# Set rpath of all binaries in tarball
@@ -2079,6 +2163,9 @@ create_tarball(){
 ################
 
 create_build_environment
+# Install patchelf 0.17.2 before any RPATH rewrites (including Python _ctypes).
+# Distro patchelf does not support --page-size and treats it as a filename.
+get_updated_patchelf
 
 if [ "${BUILD_DEPENDENCIES}" = "1" ]; then
 
