@@ -88,6 +88,7 @@ fi
 
 export OPENSSL_VERSION=3.1.8
 export OPENSSL_VERSION_35=3.5.4
+export CURL_OPENSSL_PREFIX=${DEPENDENCY_LIBS_PATH}/curl-openssl3
 export ZLIB_VERSION=1.3
 export KRB5_VERSION=1.21.3
 export KEYUTILS_VERSION=1.6.1
@@ -187,7 +188,7 @@ PGBADGER_BRANCH="v13.2"
 PATRONI_BRANCH="v4.1.4"
 HAPROXY_BRANCH="v2.8.27"
 PGVECTOR_BRANCH="v0.8.6"
-PG_TDE_BRANCH="release-2.2"
+PG_TDE_BRANCH="2.2.2"
 PG_OIDC_BRANCH="release-1.0"
 PG_CRON_BRANCH="v1.6.7"
 
@@ -211,9 +212,22 @@ create_build_environment(){
 
 }
 
+# Run inside an OpenSSL source tree. The tarballs run on any distro, so point OpenSSL's
+# default CA locations at the system trust stores instead of the build prefix:
+# RHEL family bundle file, Debian/Ubuntu/SUSE hashed certificate directory.
+set_openssl_default_ca_paths(){
+
+	local hdr
+	hdr=$(grep -lE '^#  define X509_CERT_DIR +OPENSSLDIR' include/internal/*.h)
+	sed -i -e 's|^\(#  define X509_CERT_DIR \).*OPENSSLDIR.*|\1"/etc/ssl/certs:/etc/pki/tls/certs"|' \
+		-e 's|^\(#  define X509_CERT_FILE \).*OPENSSLDIR.*|\1"/etc/pki/tls/cert.pem"|' ${hdr}
+	grep -q '"/etc/ssl/certs:/etc/pki/tls/certs"' ${hdr} && grep -q '"/etc/pki/tls/cert.pem"' ${hdr} \
+		|| { echo "Error: failed to set OpenSSL default CA locations"; exit 1; }
+}
+
 build_openssl(){
 
-	build_status "start" "openssl" 
+	build_status "start" "openssl"
 	cd /source
 	rm -rf openssl-${OPENSSL_VERSION}* || true
 	wget_retry https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
@@ -237,6 +251,25 @@ build_openssl35(){
 	make
 	make install
 	build_status "ends" "openssl"
+}
+
+# curl >= 8.22.0 requires OpenSSL 3. For ssl1.1 tarballs, build a static OpenSSL 3
+# in a private prefix that is linked only into libcurl (with its symbols hidden),
+# so no OpenSSL 3 shared libraries are shipped and nothing else links against it.
+build_openssl_static_for_curl(){
+
+	build_status "start" "openssl-static-for-curl"
+	cd /source
+	rm -rf curl-openssl-build || true
+	mkdir curl-openssl-build && cd curl-openssl-build
+	wget_retry https://www.openssl.org/source/openssl-${OPENSSL_VERSION_35}.tar.gz
+	tar -xvzf openssl-${OPENSSL_VERSION_35}.tar.gz
+	cd openssl-${OPENSSL_VERSION_35}
+	set_openssl_default_ca_paths
+	./Configure --prefix=${CURL_OPENSSL_PREFIX} --openssldir=${CURL_OPENSSL_PREFIX}/ssl --libdir=lib no-shared no-tests -fPIC
+	make
+	make install_sw
+	build_status "ends" "openssl-static-for-curl"
 }
 
 build_zlib(){
@@ -427,9 +460,29 @@ build_curl(){
 	wget_retry https://curl.se/download/curl-${CURL_VERSION}.tar.gz
 	tar -xvzf curl-${CURL_VERSION}.tar.gz
 	cd curl-${CURL_VERSION}
-	LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:$LD_LIBRARY_PATH ./configure --prefix=${DEPENDENCY_LIBS_PATH} --with-ssl=${SSL_INSTALL_PATH} --with-zlib=${DEPENDENCY_LIBS_PATH} --without-libpsl
+	if [ "$USE_SYSTEM_SSL" = "1" ]; then
+		build_openssl_static_for_curl
+		cd /source/curl-${CURL_VERSION}
+		PKG_CONFIG_PATH=${CURL_OPENSSL_PREFIX}/lib/pkgconfig LIBS="-ldl -lpthread" LDFLAGS="-Wl,--exclude-libs,libssl.a:libcrypto.a" \
+		LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:$LD_LIBRARY_PATH ./configure --prefix=${DEPENDENCY_LIBS_PATH} --with-ssl=${CURL_OPENSSL_PREFIX} --with-zlib=${DEPENDENCY_LIBS_PATH} --without-libpsl \
+			--without-ca-bundle --without-ca-path --with-ca-fallback
+	else
+		LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:$LD_LIBRARY_PATH ./configure --prefix=${DEPENDENCY_LIBS_PATH} --with-ssl=${SSL_INSTALL_PATH} --with-zlib=${DEPENDENCY_LIBS_PATH} --without-libpsl \
+			--without-ca-bundle --without-ca-path --with-ca-fallback
+	fi
 	LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:$LD_LIBRARY_PATH make
 	make install
+	if [ "$USE_SYSTEM_SSL" = "1" ]; then
+		# libcurl must neither depend on nor export OpenSSL 3 symbols in ssl1.1 tarballs
+		if readelf -d ${DEPENDENCY_LIBS_PATH}/lib/libcurl.so | grep -E 'NEEDED.*lib(ssl|crypto)\.so'; then
+			echo "Error: libcurl links to a shared OpenSSL library"
+			exit 1
+		fi
+		if nm -D --defined-only ${DEPENDENCY_LIBS_PATH}/lib/libcurl.so | grep -E ' (SSL_|EVP_|OPENSSL_|CRYPTO_|X509_)'; then
+			echo "Error: libcurl exports OpenSSL symbols"
+			exit 1
+		fi
+	fi
 	build_status "ends" "curl"
 }
 
