@@ -212,9 +212,10 @@ create_build_environment(){
 
 }
 
-# Run inside an OpenSSL source tree. The tarballs run on any distro, so point OpenSSL's
-# default CA locations at the system trust stores instead of the build prefix:
-# RHEL family bundle file, Debian/Ubuntu/SUSE hashed certificate directory.
+# Run inside an OpenSSL source tree. Point OpenSSL's default CA locations at the system
+# trust stores instead of the build prefix: RHEL family bundle file, Debian/Ubuntu/SUSE
+# hashed certificate directory. Our libcurl uses these defaults (--with-ca-fallback), both
+# on customer hosts and in this build, where system git can load it via LD_LIBRARY_PATH.
 set_openssl_default_ca_paths(){
 
 	local hdr
@@ -233,6 +234,7 @@ build_openssl(){
 	wget_retry https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz
 	tar -xvzf openssl-${OPENSSL_VERSION}.tar.gz
 	cd openssl-${OPENSSL_VERSION}
+	set_openssl_default_ca_paths
 	./Configure --prefix=${DEPENDENCY_LIBS_PATH} --openssldir=${DEPENDENCY_LIBS_PATH} '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
 	make
 	make install
@@ -247,6 +249,7 @@ build_openssl35(){
 	wget_retry https://www.openssl.org/source/openssl-${OPENSSL_VERSION_35}.tar.gz
 	tar -xvzf openssl-${OPENSSL_VERSION_35}.tar.gz
 	cd openssl-${OPENSSL_VERSION_35}
+	set_openssl_default_ca_paths
 	./Configure --prefix=${DEPENDENCY_LIBS_PATH} --openssldir=${DEPENDENCY_LIBS_PATH} '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
 	make
 	make install
