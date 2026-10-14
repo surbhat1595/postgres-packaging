@@ -1409,7 +1409,7 @@ build_pg_tde(){
 	export LD_LIBRARY_PATH=${DEPENDENCY_LIBS_PATH}/lib64:${DEPENDENCY_LIBS_PATH}/lib:${POSTGRESQL_PREFIX}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 	rm -rf build
-	meson setup build -Dpg_config=${POSTGRESQL_PREFIX}/bin/pg_config
+	meson setup build --buildtype=release -Dpg_config=${POSTGRESQL_PREFIX}/bin/pg_config
 	meson compile -C build -j 4
 	meson install -C build
 
